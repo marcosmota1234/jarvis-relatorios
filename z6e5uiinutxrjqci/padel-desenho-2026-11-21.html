@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agente D · Desenho</title>
+<style>
+:root{--bg:#05080d;--panel:#0a111a;--cy:#00e5ff;--am:#ffb300;--rd:#ff3d57;--gr:#3ddc97;--tx:#cfe8ee;--mut:#6f8a94}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.6 Consolas,"Cascadia Mono",monospace;background-image:radial-gradient(circle at 20% 0,#0a1f2b 0,transparent 45%)}
+main{max-width:1040px;margin:auto;padding:30px 20px 80px}
+h1{color:var(--cy);letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 12px #00e5ff88;margin:0}
+h2{color:var(--cy);font-size:15px;letter-spacing:.15em;text-transform:uppercase;border-bottom:1px solid #00e5ff40;padding-bottom:6px;margin-top:40px}
+.sub{color:var(--mut)}.am{color:var(--am)}.rd{color:var(--rd)}.cy{color:var(--cy)}.gr{color:var(--gr)}
+.card{background:var(--panel);border:1px solid #00e5ff33;border-radius:6px;padding:12px 16px;margin:10px 0;box-shadow:0 0 18px #00e5ff10}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.n{border:1px solid var(--cy);border-radius:4px;padding:5px 9px;background:#00e5ff0f}.n.a{border-color:var(--am);background:#ffb3000f}.n.r{border-color:var(--rd);background:#ff3d570f}.n.g{border-color:var(--gr);background:#3ddc9710}
+.ar{color:var(--mut)}
+table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #00e5ff22;padding:5px 8px;text-align:left;vertical-align:top}th{color:var(--am)}
+.chat{background:#02050a;border:1px solid #00e5ff22;border-radius:8px;padding:10px;max-width:420px}
+.b{padding:6px 10px;border-radius:8px;margin:5px 0;max-width:85%}.u{background:#123;margin-left:auto;text-align:right}.k{background:#0d2a33;color:var(--cy)}.mg{background:#2a2108;color:var(--am)}
+.screen{background:#02050a;border:1px solid var(--am);border-radius:6px;padding:10px;white-space:pre-wrap;color:var(--am)}
+code{background:#02050a;border:1px solid #00e5ff22;padding:1px 5px;border-radius:3px;color:var(--cy)}
+</style></head><body><main>
+<h1>Agente D · Desenho</h1>
+<div class="sub">Assistente WhatsApp do clube de padel · 3 campos · 07h–23h todos os dias · pagamentos por transferência e presencial · ambiente de testes</div>
+
+<h2>1 · Arquitetura</h2>
+<div class="card">
+<div class="flow"><span class="n">Cliente WhatsApp</span><span class="ar">⇄</span><span class="n">Meta Cloud API / simulador</span><span class="ar">→</span><span class="n">App HTTP (HMAC, API key)</span><span class="ar">→</span><span class="n">Engine (núcleo genérico)</span></div>
+<div class="flow"><span class="n">Engine</span><span class="ar">→</span><span class="n g">Vertical padel</span><span class="ar">→</span><span class="n">Campos</span><span class="n">Aulas/treinos</span><span class="n">Cobranças</span><span class="n">Torneios</span><span class="n">Cancelamentos</span></div>
+<div class="flow"><span class="n">Módulos</span><span class="ar">→</span><span class="n">SQLite (reservas, cobranças, torneios, auditoria)</span><span class="ar">·</span><span class="n a">Outbound (shadow | approval | auto)</span><span class="ar">→</span><span class="n a">Fila de aprovação</span><span class="ar">⇄</span><span class="n a">Gestor (WhatsApp)</span></div>
+<div class="flow"><span class="n">n8n (cron)</span><span class="ar">→</span><span class="n">/api/reminders · /api/billing/remind · /api/digest · /api/dispatch</span></div>
+</div>
+<div class="grid">
+<div class="card"><b class="cy">Núcleo genérico</b><br>Ordem de decisão: opt-out › rate limit › PARAR › RGPD › emergência › injeção › aviso de IA › humano › fluxo ativo › módulos › info › fallback+escalamento.</div>
+<div class="card"><b class="cy">Verticais</b><br>Subclasse de <code>Vertical</code> + módulos; escolhida por <code>"vertical"</code> no JSON do clube. Outros negócios = nova pasta.</div>
+<div class="card"><b class="am">Segurança</b><br>Ações sensíveis (cobrança, lembrete de pagamento, cancelamento, envio em massa) nunca saem sem OK do gestor, mesmo em modo auto. Nada move dinheiro.</div>
+</div>
+
+<h2>2 · Fluxos de conversa</h2>
+<div class="grid">
+<div class="card"><b>Reserva e conflito</b><div class="chat">
+<div class="b u">campo 25/11 18h</div><div class="b k">Reserva confirmada: Campo 2, 18:00 (90 min).</div>
+<div class="b u">campo 25/11 18h <span class="sub">(campos cheios)</span></div><div class="b k">Ocupado. Alternativas 1) 16:30 2) 17:00 … ou ESPERA.</div>
+<div class="b u">espera</div><div class="b k">Fica na lista de espera; avisamos se ficar livre.</div></div></div>
+<div class="card"><b>Cancelamento (com aprovação)</b><div class="chat">
+<div class="b u">cancelar</div><div class="b k">Quer mesmo cancelar campo…? SIM/NAO</div>
+<div class="b u">sim</div><div class="b k">Pedido enviado ao gestor; a reserva mantém-se até confirmação.</div>
+<div class="b mg">Gestor: OK 4 → cancela, devolve crédito de pacote, oferece vaga à lista de espera</div></div></div>
+<div class="card"><b>Pagamento (transferência / presencial)</b><div class="chat">
+<div class="b mg">Gestor: COBRAR 9100… 12 jogo</div>
+<div class="b mg">Gestor: OK 7</div>
+<div class="b k">Olá! Jogo: 12,00 € até 28/11. Referência PD…; transferência (IBAN) ou presencial. (assistente virtual / IA)</div>
+<div class="b mg">Gestor: PAGO PD… → marcada como paga</div></div></div>
+<div class="card"><b>Mix / torneio</b><div class="flow"><span class="n a">MIX NOVO (datas, hora, duração, máx. duplas)</span><span class="ar">→</span><span class="n">inscrições (dupla / individual E-D / lista colada)</span><span class="ar">→</span><span class="n a">FECHAR</span><span class="ar">→</span><span class="n a">PLANO</span><span class="ar">→</span><span class="n a">SORTEIO</span><span class="ar">→</span><span class="n a">AGENDAR (campos+horas na agenda)</span><span class="ar">→</span><span class="n a">RESULTADO</span><span class="ar">→</span><span class="n g">eliminatórias automáticas</span><span class="ar">→</span><span class="n">CLASSIFICACAO</span><span class="ar">→</span><span class="n a">DIVULGAR (aprovação)</span></div>
+<div class="chat"><div class="b u">mix</div><div class="b k">1) Mix Sexta · 06/03 19:00 (120 min) · 3/12 duplas. Responda com o número.</div>
+<div class="b u">1 → Ana Silva → 2 (individual)</div><div class="b k">Joga do lado esquerdo ou direito? (E/D)</div>
+<div class="b u">esquerda → intermédio</div><div class="b k">Inscrição registada. O clube forma a dupla esquerda + direita no sorteio.</div></div></div>
+</div>
+
+<h2>2b · Calendário (agenda) e durações</h2>
+<div class="grid">
+<div class="card"><b class="cy">Camada de calendário</b><br>Interface <code>CalendarAdapter</code> (add/remove/busy_courts/events). Ativo: <code>LocalCalendar</code> (JSON + export ICS). <span class="am">Google Calendar: adaptador preparado (stub), por ligar.</span> Reservas, aulas e jogos de mix escrevem na agenda; a disponibilidade lê da agenda (inclui bloqueios externos).</div>
+<div class="card"><b class="cy">Duração da marcação</b><br>Cliente escolhe <b>60 / 90 / 120 min</b> (ou escreve “90 min”, “hora e meia”). Respeita 07h–23h e os 3 campos; sobreposições parciais bloqueadas.</div>
+<div class="card"><b class="cy">Formato automático do mix</b><br>4–6 duplas: todos contra todos · 7–10: grupos + eliminatórias de 4 · 11–16: grupos (+ KO de 8 se couber) · 17–24: grupos. Jogo 20 min, máx. 3 campos; se não couber: <span class="rd">avisa</span> e propõe alternativas. Ver <code>docs/formatos-torneio.md</code>.</div>
+<div class="card"><b class="cy">Modo de teste interativo</b><br><code>py -m jarvis_wa --config templates\clube.json playground</code>: vários clientes + gestor + fila + agenda + relógio simulado (<code>/tempo +2d</code>) + dados fictícios (<code>/dados</code>).</div>
+</div>
+
+<h2>3 · Estados</h2>
+<div class="card"><table>
+<tr><th>Entidade</th><th>Estados</th></tr>
+<tr><td>Reserva</td><td>confirmed → cancelled (só após OK do gestor)</td></tr>
+<tr><td>Cobrança</td><td>draft → pending (OK) → paid (PAGO manual) | void (rejeitada)</td></tr>
+<tr><td>Fila de aprovação</td><td>pending → approved → sent | rejected | expired · shadow (nunca sai) · failed (volta à fila)</td></tr>
+<tr><td>Torneio</td><td>open → closed → drawn → scheduled → finished (final jogada) · jogos: scheduled → done; KO por definir → definido quando termina a ronda anterior</td></tr>
+<tr><td>Inscrição</td><td>confirmed | waiting → promovida | cancelled · lado E/D · limite em duplas</td></tr>
+<tr><td>Conversa</td><td>sem fluxo → fluxo ativo (escolha, nome, confirmação) → fim · ESCAPE: voltar/menu/0</td></tr>
+</table></div>
+
+<h2>4 · Ecrãs do gestor (WhatsApp)</h2>
+<div class="grid">
+<div class="card"><b>LISTA</b><div class="screen">Pendentes:
+#4 cancel_booking → …01  "Confirmamos o cancelamento…"
+#7 payment_request → …01 "Jogo: 12,00 €…"
+Responda OK n · NAO n · EDITAR n texto</div></div>
+<div class="card"><b>DIVIDAS</b><div class="screen">Em dívida (2) — 36,00 €
+PD00000195 · …01 · 12,00 € · 3 dias
+…</div></div>
+<div class="card"><b>TORNEIO LISTA / CLASSIFICACAO</b><div class="screen">#1 Mix de sexta (mix, 2099-01-10) open 8/8
+Grupo 1: 1. Ana/Rui 6 pts …</div></div>
+<div class="card"><b>PLANO / AGENDA</b><div class="screen">Formato: 3 grupos (4+4+4 duplas)
+Jogos: 18 de grupo + 0 = 18; slots: 6 de 6
+Aviso: tempo insuficiente → Alternativa: aumentar para 150 min…
+AGENDA: 19:00-19:20 Campo 1: Mix Sexta (G)</div></div>
+<div class="card"><b>AJUDA</b><div class="screen">COBRAR · PAGO · DIVIDAS · LEMBRETES · SOCIO · MENSALIDADES · MIX NOVO · IMPORTAR · FECHAR · PLANO · SORTEIO · AGENDAR · AGENDA · RESULTADO · DIVULGAR · AVISO</div></div>
+</div>
+
+<h2>5 · Configuração do clube</h2>
+<div class="card">Ficheiro <code>templates/clube.json</code>: 3 campos, horário 07:00–23:00 todos os dias, pagamentos por transferência/presencial (<code>instructions</code>, sem link). Pacotes, treinadores, turmas e IBAN marcados <span class="am">PROVISÓRIO</span> — a substituir pelo clube.</div>
+<div class="card sub">Relatório dos testes: <code>docs/relatorio-testes.html</code> · Limitações: Google Calendar só como adaptador preparado, sem teste real WhatsApp, referências não Multibanco, RGPD/DPA por validar.</div>
+</main></body></html>

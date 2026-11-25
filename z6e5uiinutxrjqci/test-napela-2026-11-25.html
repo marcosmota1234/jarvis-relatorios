@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080d">
+<title>Sobremesas com Chocolate</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05080d;--c:#00e5ff;--card:#0c121b;--tx:#e6f1f5;--mut:#8aa0aa}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{padding:28px 16px 12px;text-align:center}
+h1{color:var(--c);font-size:1.7rem;text-shadow:0 0 14px rgba(0,229,255,.45)}
+header p{color:var(--mut);margin-top:6px;font-size:.95rem}
+.tools{position:sticky;top:0;background:rgba(5,8,13,.95);backdrop-filter:blur(6px);padding:10px 16px;z-index:5;border-bottom:1px solid #12202b}
+input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #1b3340;background:var(--card);color:var(--tx);font-size:1rem;outline:none}
+input:focus{border-color:var(--c);box-shadow:0 0 0 2px rgba(0,229,255,.2)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-top:10px;padding-bottom:2px}
+.chip{flex:none;padding:7px 14px;border-radius:20px;border:1px solid #1b3340;background:transparent;color:var(--mut);font-size:.85rem;cursor:pointer}
+.chip.on{background:var(--c);color:#05080d;border-color:var(--c);font-weight:600}
+main{padding:16px;display:grid;gap:14px;max-width:760px;margin:auto}
+.card{background:var(--card);border:1px solid #12202b;border-radius:14px;padding:16px}
+.card h2{font-size:1.15rem;color:var(--c)}
+.meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--mut);font-size:.8rem;margin:4px 0 8px}
+.card p{font-size:.92rem}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--c);font-size:.9rem;padding:6px 0}
+ul,ol{padding-left:20px;font-size:.9rem;margin-top:4px}
+li{margin:3px 0}
+.empty{text-align:center;color:var(--mut);padding:30px}
+footer{text-align:center;color:var(--mut);font-size:.75rem;padding:20px 16px 30px}
+</style>
+</head>
+<body>
+<header>
+<h1>🍫 Sobremesas com Chocolate</h1>
+<p>Receitas simples e irresistíveis</p>
+</header>
+<div class="tools">
+<input id="q" type="search" placeholder="Pesquisar receita ou ingrediente…" aria-label="Pesquisar">
+<div class="chips" id="chips"></div>
+</div>
+<main id="list"></main>
+<footer>Ajusta quantidades ao teu gosto. Bom apetite!</footer>
+<script>
+const R=[
+{n:"Mousse de chocolate",c:"Frio",t:"20 min + 4 h frigorífico",s:"6 doses",d:"Clássica, leve e aerada.",i:["200 g chocolate negro","4 ovos","2 colheres de sopa de açúcar","1 colher de sopa de café forte (opcional)"],p:["Derreter o chocolate em banho-maria e deixar arrefecer ligeiramente.","Misturar as gemas com o chocolate e o café.","Bater as claras em castelo com o açúcar.","Envolver delicadamente as claras no chocolate.","Repartir por taças e levar ao frigorífico 4 horas."]},
+{n:"Bolo de chocolate húmido",c:"Bolos",t:"50 min",s:"10 fatias",d:"Fofo, intenso e perfeito com café.",i:["200 g chocolate negro","150 g manteiga","150 g açúcar","4 ovos","80 g farinha","1 pitada de sal"],p:["Pré-aquecer o forno a 180 °C e untar uma forma.","Derreter o chocolate com a manteiga.","Bater ovos com açúcar até ficarem cremosos.","Juntar o chocolate e depois a farinha com o sal.","Cozer 25–30 min; o centro deve ficar ligeiramente húmido."]},
+{n:"Brownies",c:"Bolos",t:"40 min",s:"12 quadrados",d:"Crocantes por fora, macios por dentro.",i:["150 g chocolate negro","120 g manteiga","180 g açúcar","3 ovos","90 g farinha","60 g nozes (opcional)"],p:["Forno a 180 °C; forrar uma forma quadrada.","Derreter chocolate e manteiga; juntar o açúcar.","Adicionar os ovos um a um.","Envolver a farinha e as nozes.","Cozer 22–25 min e deixar arrefecer antes de cortar."]},
+{n:"Fondant de chocolate",c:"Quente",t:"25 min",s:"4 doses",d:"Coração derretido a escorrer.",i:["120 g chocolate negro","100 g manteiga","2 ovos + 2 gemas","60 g açúcar","30 g farinha"],p:["Forno a 220 °C; untar 4 formas individuais.","Derreter chocolate e manteiga.","Bater ovos, gemas e açúcar; juntar ao chocolate.","Incorporar a farinha.","Cozer 9–10 min, desenformar logo e servir quente."]},
+{n:"Trufas de chocolate",c:"Frio",t:"15 min + 2 h frigorífico",s:"20 unidades",d:"Só 3 ingredientes.",i:["200 g chocolate negro","100 ml natas","Cacau em pó para envolver"],p:["Aquecer as natas sem ferver.","Verter sobre o chocolate picado e mexer até ficar liso.","Refrigerar 2 horas.","Fazer bolinhas e passar por cacau."]},
+{n:"Salame de chocolate",c:"Frio",t:"20 min + 3 h frigorífico",s:"10 fatias",d:"Tradicional portuguesa, sem forno.",i:["200 g bolacha Maria","100 g chocolate em pó/cacau","100 g açúcar","150 g manteiga","1 ovo","1 cálice de vinho do Porto (opcional)"],p:["Partir a bolacha em pedaços.","Misturar manteiga, açúcar, cacau e ovo.","Juntar a bolacha e o Porto.","Moldar em rolo com película aderente.","Refrigerar 3 horas e fatiar."]},
+{n:"Gelado de chocolate caseiro",c:"Frio",t:"15 min + 6 h congelador",s:"6 doses",d:"Cremoso, sem gelatina.",i:["300 ml natas","200 ml leite condensado","3 colheres de sopa de cacau","100 g chocolate picado"],p:["Bater as natas até ficarem firmes.","Misturar leite condensado e cacau.","Envolver as natas e o chocolate picado.","Congelar numa forma durante 6 horas."]},
+{n:"Churros com molho de chocolate",c:"Quente",t:"35 min",s:"4 doses",d:"Crocantes, para mergulhar.",i:["250 ml água","1 colher de sopa de açúcar","125 g farinha","Óleo para fritar","150 g chocolate","100 ml natas"],p:["Ferver a água com açúcar e uma pitada de sal.","Juntar a farinha e mexer até formar massa.","Colocar num saco de pasteleiro e fritar tiras em óleo quente.","Escorrer e passar por açúcar.","Derreter chocolate com natas para o molho."]}
+];
+const cats=["Todas",...new Set(R.map(r=>r.c))];
+let cat="Todas";
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function chips(){
+$("chips").innerHTML=cats.map(c=>`<button class="chip${c===cat?" on":""}" data-c="${c}">${c}</button>`).join("");
+}
+function render(){
+const q=$("q").value.trim().toLowerCase();
+const f=R.filter(r=>(cat==="Todas"||r.c===cat)&&(!q||(r.n+" "+r.d+" "+r.i.join(" ")).toLowerCase().includes(q)));
+$("list").innerHTML=f.length?f.map(r=>`<article class="card"><h2>${esc(r.n)}</h2><div class="meta"><span>⏱ ${esc(r.t)}</span><span>🍽 ${esc(r.s)}</span><span>📂 ${esc(r.c)}</span></div><p>${esc(r.d)}</p><details><summary>Ver receita</summary><b>Ingredientes</b><ul>${r.i.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><b style="display:block;margin-top:8px">Preparação</b><ol>${r.p.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details></article>`).join(""):'<div class="empty">Nenhuma receita encontrada.</div>';
+}
+$("chips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;cat=b.dataset.c;chips();render()});
+$("q").addEventListener("input",render);
+chips();render();
+</script>
+</body>
+</html>
